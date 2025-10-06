@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Phase Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #4a90e2;
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            border-color: #357abd;
+            background: #e9ecef;
+        }
+
+        .upload-area.dragover {
+            border-color: #357abd;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .upload-text {
+            color: #4a90e2;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 20px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            color: #1976d2;
+            font-weight: 500;
+            display: none;
+        }
+
+        .phase-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .phase-section h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+        }
+
+        .phase-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .phase-option {
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+            padding: 25px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .phase-option:hover {
+            border-color: #4a90e2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+        }
+
+        .phase-option.selected {
+            border-color: #4a90e2;
+            background: #e3f2fd;
+        }
+
+        .phase-option input[type="radio"] {
+            display: none;
+        }
+
+        .phase-option h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.2em;
+        }
+
+        .phase-option p {
+            color: #6c757d;
+            font-size: 0.95em;
+        }
+
+        .process-button {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 30px;
+            padding: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: white;
+            background: #4a90e2;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .process-button:hover:not(:disabled) {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .process-button:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 12px;
+            margin: 20px auto;
+            max-width: 600px;
+            border-radius: 6px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .status-message.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4a90e2;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .spinner.active {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .results-section.visible {
+            display: block;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .image-container h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .image-container img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .images-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .phase-buttons {
+                flex-direction: column;
+            }
+
+            .phase-option {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Medical Phase Simulator</h1>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <label for="fileInput" class="upload-text">
+                    Click to upload or drag and drop<br>
+                    Medical image (JPG, PNG)
+                </label>
+                <input type="file" id="fileInput" accept="image/jpeg,image/png">
+                <div class="file-info" id="fileInfo"></div>
+            </div>
+        </div>
+
+        <div class="phase-section">
+            <h2>Select Processing Phase</h2>
+            <div class="phase-buttons">
+                <label class="phase-option" id="arterialOption">
+                    <input type="radio" name="phase" value="arterial">
+                    <h3>Arterial Phase</h3>
+                    <p>Enhance contrast for better visibility</p>
+                </label>
+                <label class="phase-option" id="venousOption">
+                    <input type="radio" name="phase" value="venous">
+                    <h3>Venous Phase</h3>
+                    <p>Apply smoothing to reduce noise</p>
+                </label>
+            </div>
+        </div>
+
+        <button class="process-button" id="processBtn" disabled>Process Image</button>
+
+        <div class="status-message" id="statusMessage"></div>
+        <div class="spinner" id="spinner"></div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="images-grid">
+                <div class="image-container">
+                    <h3>Original</h3>
+                    <img id="originalImage" src="" alt="Original Image">
+                </div>
+                <div class="image-container">
+                    <h3>Processed</h3>
+                    <img id="processedImage" src="" alt="Processed Image">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = 'https://rezvan98-assignment.hf.space/process';
+
+        let selectedFile = null;
+        let selectedPhase = null;
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const arterialOption = document.getElementById('arterialOption');
+        const venousOption = document.getElementById('venousOption');
+        const processBtn = document.getElementById('processBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const spinner = document.getElementById('spinner');
+        const resultsSection = document.getElementById('resultsSection');
+        const originalImage = document.getElementById('originalImage');
+        const processedImage = document.getElementById('processedImage');
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    showStatus('Please select a valid image file (JPG or PNG)', 'error');
+                    return;
+                }
+                selectedFile = file;
+                displayFileInfo(file);
+                displayOriginalImage(file);
+                checkFormComplete();
+            }
+        }
+
+        function displayFileInfo(file) {
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileInfo.innerHTML = `${file.name} (${sizeMB} MB)`;
+            fileInfo.style.display = 'block';
+        }
+
+        function displayOriginalImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect({ target: { files: [file] } });
+            }
+        });
+
+        const phaseRadios = document.querySelectorAll('input[name="phase"]');
+        phaseRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                selectedPhase = e.target.value;
+                arterialOption.classList.remove('selected');
+                venousOption.classList.remove('selected');
+                if (selectedPhase === 'arterial') {
+                    arterialOption.classList.add('selected');
+                } else {
+                    venousOption.classList.add('selected');
+                }
+                checkFormComplete();
+            });
+        });
+
+        function checkFormComplete() {
+            processBtn.disabled = !(selectedFile && selectedPhase);
+        }
+
+        processBtn.addEventListener('click', processImage);
+
+        async function processImage() {
+            if (!selectedFile || !selectedPhase) {
+                showStatus('Please upload an image and select a phase', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            formData.append('phase', selectedPhase);
+
+            showStatus('Processing image...', 'loading');
+            spinner.classList.add('active');
+            processBtn.disabled = true;
+            resultsSection.classList.remove('visible');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+
+                processedImage.src = imageUrl;
+                resultsSection.classList.add('visible');
+
+                const phaseLabel = selectedPhase === 'arterial' ? 'Arterial' : 'Venous';
+                showStatus(`${phaseLabel} phase processing completed successfully`, 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`Error: ${error.message}. Please check if the backend server is running.`, 'error');
+            } finally {
+                spinner.classList.remove('active');
+                processBtn.disabled = false;
+            }
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+        }
+    </script>
+</body>
+</html>
